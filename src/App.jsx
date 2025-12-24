@@ -3,6 +3,7 @@ import Countries from "./Components/Countries";
 import CountryFullDetail from "./Components/CountryFullDetail";
 import NavBar from "./Components/Nav-bar";
 import SearchInput from "./Components/Search-input";
+import Loader from "./Components/Loader";
 
 const App = () => {
 const [search, setSearch] = useState("");
@@ -12,6 +13,8 @@ const [page] = useState(1);
 const [flagPerPage] = useState(9);
 const [color, setColor] = useState(false);
 const [selectedCountry, setSelectedCountry] = useState(null);
+const [loading, setLoading] = useState(true);
+const [detailLoading, setDetailLoading] = useState(false);
 
 
 
@@ -19,6 +22,7 @@ const [selectedCountry, setSelectedCountry] = useState(null);
 const fetchCountriesData = async () => {
 
         try {
+          setLoading(true);
             const res = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,population,region,capital');
             const data = await res.json();
             
@@ -29,6 +33,8 @@ const fetchCountriesData = async () => {
         } catch (error) {
             // setError('Failed to fetch countries');
             console.log(error);
+        }finally{
+          setLoading(false);
         }
         
     }
@@ -68,6 +74,7 @@ const fetchCountriesData = async () => {
     }
 
    const handleCountryClick = async (country) => {
+    setDetailLoading(true);
     try {
         // Fetch complete country details using the specific country name
         const res = await fetch(`https://restcountries.com/v3.1/name/${country.name.common}?fullText=true`);
@@ -77,6 +84,8 @@ const fetchCountriesData = async () => {
         console.log('Error fetching country details:', error);
         // Fallback to the limited data you already have
         setSelectedCountry(country);
+    } finally {
+        setDetailLoading(false);
     }
 }
 
@@ -89,7 +98,11 @@ const fetchCountriesData = async () => {
         {/* search section */}
        <SearchInput color={color} search={search} handleSearch={handleSearch} region={region} handleRegionChange={handleRegionChange} />
         {/* flags and details */}
-        {filteredBySearch.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader />
+          </div>
+        ) : filteredBySearch.length === 0 ? (
           <div className="container mx-auto text-center text-gray-600 my-8">
             No countries match your search or selected region.
           </div>
@@ -98,6 +111,12 @@ const fetchCountriesData = async () => {
             {paginated.map((country, index) => (
                 <Countries key={index} country={country} color={color} onCountryClick={handleCountryClick} />
             ))}
+          </div>
+        )}
+
+        {detailLoading && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+            <Loader />
           </div>
         )}
 
